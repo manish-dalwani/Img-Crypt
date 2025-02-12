@@ -66,6 +66,7 @@ If you encounter any issues, feel free to **open an issue** on GitHub or reach o
 - Provide the encoded image file.
 - Enter the password *(if applicable)*.
 - View or save the decoded message.
+
 ![Decoding a Message from an Image](https://github.com/manish-dalwani/Img-Crypt/blob/main/Snapshot/secret_extract.png?raw=true)
 
 
