@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+
+from PIL import Image
+import stepic
+# https://github.com/psibi/Rizzy/blob/master/stepic.py
+import base64
+import os
+import sys
+import time
+from cryptography.fernet import Fernet
+
+def typewriter(text, delay=0.1):
+    for char in text:
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        time.sleep(delay)
+    print()
+
+def generate_key(password):
+    return base64.urlsafe_b64encode(password.ljust(32)[:32].encode())
+
+def encrypt_message(message, password):
+    key = generate_key(password)
+    cipher = Fernet(key)
+    encrypted_message = cipher.encrypt(message.encode())
+    return encrypted_message.decode()
+
+def decrypt_message(encrypted_message, password):
+    key = generate_key(password)
+    cipher = Fernet(key)
+    decrypted_message = cipher.decrypt(encrypted_message.encode())
+    return decrypted_message.decode()
+
+def get_valid_file(prompt, file_type):
+    while True:
+        file_name = input(prompt).strip()
+        if file_name:
+            try:
+                if file_type == "image":
+                    return Image.open(file_name), file_name
+                elif file_type == "text":
+                    with open(file_name, 'r') as file:
+                        return file.read(), file_name
+            except Exception as e:
+                print(f"❗ Error: {e}. Please enter a valid {file_type} file.\n")
+        else:
+            print(f"❗ {file_type.capitalize()} file name cannot be empty.\n")
+    
+def encode_text():
+    img, img_path = get_valid_file("Enter image name or path with extension (e.g., image.jpg): ", "image")
+
+    print()
+    while True:
+        print("[01] Enter text manually?")
+        print("[02] Load text from a file?")
+        option = input("Select an option: ")
+        print()
+        if option in ['1', '01']:
+            # message = ""
+            # while not message.strip():
+                # message = input("Enter the text to encode: ")
+                # if not message.strip():
+                    # print("❗ Message cannot be empty.\n")
+            # break
+            while True:
+                message = input("Enter the text to encode: ").strip()
+                if message:
+                    break
+                print("❗ Message cannot be empty.\n")
+            break
+
+        elif option in ['2', '02']:
+            message, text_path = get_valid_file("Enter text file name or path with extension (e.g., S3cr3t.txt): ", "text")
+            img_size, text_size = os.path.getsize(img_path), os.path.getsize(text_path)
+            if text_size*3 > img_size:
+                while True:
+                    print("❗ Text file is larger than the image file.")
+                    print("\n[1] Provide a larger image file")
+                    print("[2] Provide a smaller text file")
+                    choice = input("Select an option: ").strip()
+                    print()
+                    if choice == '1':
+                        img, img_path = get_valid_file("Enter a larger image file: ", "image")
+                        img_size = os.path.getsize(img_path)
+                    elif choice == '2':
+                        message, text_path = get_valid_file("Enter a smaller text file: ", "text")
+                        text_size = os.path.getsize(text_path)
+                    if img_size >= text_size*3:
+                        break
+            break
+        else:
+            print("❌ Invalid option. Please select a valid option.\n")
+    
+    if input("\nDo you want to provide a password? (Y/N): ").strip().lower() == "y":
+        while True:
+            password = input("\nEnter password (8-32 characters): ").strip()
+            if 8 <= len(password) <= 32:
+                message = encrypt_message(message, password)
+                break
+            print("❗ Password must be between 8 and 32 characters.")
+    
+    encoded_img = stepic.encode(img, message.encode())
+
+    output_path = input("\nEnter filename to save with extension (.bmp or .png): ").strip()
+    if not output_path.lower().endswith(('.bmp', '.png')):
+        output_path = "encoded_image.png"
+    encoded_img.save(output_path)
+    print(f"\n✅ Encoded image saved as {output_path}\n")
+
+def decode_text():
+    img, _ = get_valid_file("Enter encoded image name or path with extension (e.g., encoded_image.bmp): ", "image")
+    try:
+        decoded_message = stepic.decode(img)
+        if not decoded_message:
+            print("❌ This image does not contain any secret message.")
+            return
+    except Exception:
+        print("\n❌ Error decoding the image. It may not contain any secret message.\n")
+        return
+    
+    if decoded_message.startswith("gAAAAA"):  # Encrypted text detected
+        print("\n🔒 This image has a password-protected message.")
+        retries = 3
+        while retries > 0:
+            try:
+                password = input("Enter password to decode: ")
+                decoded_message = decrypt_message(decoded_message, password)
+                break
+            except:
+                retries -= 1
+                print(f"Incorrect password. {retries} attempts left.\n")
+        if retries == 0:
+            print("❗Maximum attempts reached. Exiting...\n")
+            return
+    
+    if len(decoded_message) > 100:
+        choice = input("\nThe decoded message is long. Do you want to save it to a file? (Y/N): ").strip().lower()
+
+        if choice == "y":
+            file_name = input("\nEnter the file name to save the decoded message (e.g., output.txt): ").strip()
+        
+            if not file_name.lower().endswith(('.txt')):
+                file_name = "output.txt"
+
+            with open(file_name, "w", encoding="utf-8") as file:
+                file.write(decoded_message)
+        
+            print(f"\n✅ Decoded message saved in {file_name}\n")
+        else:
+            print("\n✅ Decoded message: ", decoded_message, "\n")
+    else:
+        print("\n✅ Decoded message: ", decoded_message, "\n")
+
+def main():
+    print()
+    typewriter("DISCLAIMER: This tool is intended for educational purposes only. Use it responsibly. The creator is not liable for any unethical or illegal use.", delay=0.015)
+
+    print("\n ____  __  __  ___        ___  ____  _  _  ____  ____") 
+    print("(_  _)(  \/  )/ __) ___  / __)(  _ \( \/ )(  _ \(_  _)")
+    print(" _)(_  )    (( (_-.(___)( (__  )   / \  /  ) __/  )(  ")
+    print("(____)(_/\/\_)\___/      \___)(_)\_) (__) (__)   (__)   v1.0")
+    print("\n\nLinkedIn: https://www.linkedin.com/in/manish-dalwani/\n")
+    print(f"~~~~~~~~~~~~~~~~~ Welcome to Basic Stegnography Utility ~~~~~~~~~~~~~~~~~")
+
+    while True:
+        print("\n[01] Encode a message into an Image")
+        print("[02] Decode a message from an Image")
+        option = input("Select an option: ")
+        print()
+
+        if option in ['1', '01']:
+            encode_text()
+            break
+        elif option in ['2', '02']:
+            decode_text()
+            break
+        else:
+            # print()
+            print("❌ Invalid option. Please select a valid option.")
+
+if __name__ == "__main__":
+    main()
