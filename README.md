@@ -16,36 +16,37 @@ Follow the steps below to set up Img-Crypt on your system.
 **Step 1:** Clone the Repository:
 
 ```bash
+  sudo su
   git clone https://github.com/manish-dalwani/Img-Crypt.git
   cd Img-Crypt
 ```
 
-**Step 2:** Switch to Root & Set Permissions:
+**Step 2:** Make Script Executable:
 
 ```bash
-  sudo -i
-  chmod u+x activate.sh requirements.sh img-crypt.py
+  chmod +x install.sh
+  chmod +x uninstall.sh
+  chmod +x img-crypt.py
 ```
 
-**Step 3:** Setup Virtual Environment
+**Step 3:** Convert Windows files to Linux
 
 ```bash
-  bash activate.sh
-  source env/bin/activate
+  dos2unix install.sh
+  dos2unix uninstall.sh
+  dos2unix img-crypt.py
 ```
 
-**Step 4:** Install Dependencies
+**Step 4:** Script Installation
 
 ```bash
-  bash requirements.sh
+  ./install.sh
 ```
 
-**Step 5:** Run the Utility
+**Step 5:** Run the Utility from any Directory
 
 ```bash
-  ./img-crypt.py
-  # OR
-  python3 img-crypt.py
+  img-crypt
 ```
 If you encounter any issues, feel free to **open an issue** on GitHub or reach out.
 
