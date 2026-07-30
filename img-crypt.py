@@ -157,7 +157,17 @@ def encode_text():
                 break
             print(red_color("❗ Password must be between 8 and 32 characters."))
     
-    encoded_img = stepic.encode(img, message.encode())
+    # encoded_img = stepic.encode(img, message.encode())
+
+    try:
+        if img.mode not in ("RGB", "RGBA", "CMYK"):
+            img = img.convert("RGB")
+
+        encoded_img = stepic.encode(img, message.encode())
+
+    except Exception as e:
+        print(red_color(f"❌ Unable to encode the image: {e}"))
+        return
 
     output_path = safe_input(cyan_color('\nEnter filename to save with extension (.bmp or .png): ')).strip()
     if not output_path.lower().endswith(('.bmp', '.png')):
