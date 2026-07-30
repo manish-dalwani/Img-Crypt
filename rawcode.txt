@@ -9,12 +9,28 @@ import sys
 import time
 from cryptography.fernet import Fernet
 
-def typewriter(text, delay=0.1):
-    for char in text:
-        sys.stdout.write(char)
-        sys.stdout.flush()
-        time.sleep(delay)
+def exit_program():
     print()
+    print(f"\n⚠ Interrupted by user.")
+    print("👋 Exiting Img-Crypt...")
+    print("Thank you for using Img-Crypt!")
+    sys.exit(0)
+
+def typewriter(text, delay=0.1):
+    try:
+        for char in text:
+            sys.stdout.write(char)
+            sys.stdout.flush()
+            time.sleep(delay)
+        print()
+    except KeyboardInterrupt:
+        exit_program()
+
+def safe_input(message):
+    try:
+        return input(message)
+    except (KeyboardInterrupt, EOFError):
+        exit_program()
 
 def generate_key(password):
     return base64.urlsafe_b64encode(password.ljust(32)[:32].encode())
@@ -33,7 +49,7 @@ def decrypt_message(encrypted_message, password):
 
 def get_valid_file(prompt, file_type):
     while True:
-        file_name = input(prompt).strip()
+        file_name = safe_input(prompt).strip()
         if file_name:
             try:
                 if file_type == "image":
@@ -53,7 +69,7 @@ def encode_text():
     while True:
         print("[01] Enter text manually?")
         print("[02] Load text from a file?")
-        option = input("Select an option: ")
+        option = safe_input("Select an option: ")
         print()
         if option in ['1', '01']:
             # message = ""
@@ -63,7 +79,7 @@ def encode_text():
                     # print("❗ Message cannot be empty.\n")
             # break
             while True:
-                message = input("Enter the text to encode: ").strip()
+                message = safe_input("Enter the text to encode: ").strip()
                 if message:
                     break
                 print("❗ Message cannot be empty.\n")
@@ -77,7 +93,7 @@ def encode_text():
                     print("❗ Text file is larger than the image file.")
                     print("\n[1] Provide a larger image file")
                     print("[2] Provide a smaller text file")
-                    choice = input("Select an option: ").strip()
+                    choice = safe_input("Select an option: ").strip()
                     print()
                     if choice == '1':
                         img, img_path = get_valid_file("Enter a larger image file: ", "image")
@@ -91,9 +107,9 @@ def encode_text():
         else:
             print("❌ Invalid option. Please select a valid option.\n")
     
-    if input("\nDo you want to provide a password? (Y/N): ").strip().lower() == "y":
+    if safe_input("\nDo you want to provide a password? (Y/N): ").strip().lower() == "y":
         while True:
-            password = input("\nEnter password (8-32 characters): ").strip()
+            password = safe_input("\nEnter password (8-32 characters): ").strip()
             if 8 <= len(password) <= 32:
                 message = encrypt_message(message, password)
                 break
@@ -101,7 +117,7 @@ def encode_text():
     
     encoded_img = stepic.encode(img, message.encode())
 
-    output_path = input("\nEnter filename to save with extension (.bmp or .png): ").strip()
+    output_path = safe_input("\nEnter filename to save with extension (.bmp or .png): ").strip()
     if not output_path.lower().endswith(('.bmp', '.png')):
         output_path = "encoded_image.png"
     encoded_img.save(output_path)
@@ -115,7 +131,8 @@ def decode_text():
             print("❌ This image does not contain any secret message.")
             return
     except Exception:
-        print("\n❌ Error decoding the image. It may not contain any secret message.\n")
+        print("❌ This image does not contain any secret message.")
+        # print("\n❌ Error decoding the image. It may not contain any secret message.\n")
         return
     
     if decoded_message.startswith("gAAAAA"):  # Encrypted text detected
@@ -123,10 +140,11 @@ def decode_text():
         retries = 3
         while retries > 0:
             try:
-                password = input("Enter password to decode: ")
+                password = safe_input("Enter password to decode: ")
                 decoded_message = decrypt_message(decoded_message, password)
                 break
-            except:
+            except Exception as e:
+            # except:
                 retries -= 1
                 print(f"Incorrect password. {retries} attempts left.\n")
         if retries == 0:
@@ -134,10 +152,10 @@ def decode_text():
             return
     
     if len(decoded_message) > 100:
-        choice = input("\nThe decoded message is long. Do you want to save it to a file? (Y/N): ").strip().lower()
+        choice = safe_input("\nThe decoded message is long. Do you want to save it to a file? (Y/N): ").strip().lower()
 
         if choice == "y":
-            file_name = input("\nEnter the file name to save the decoded message (e.g., output.txt): ").strip()
+            file_name = safe_input("\nEnter the file name to save the decoded message (e.g., output.txt): ").strip()
         
             if not file_name.lower().endswith(('.txt')):
                 file_name = "output.txt"
@@ -160,12 +178,12 @@ def main():
     print(" _)(_  )    (( (_-.(___)( (__  )   / \  /  ) __/  )(  ")
     print("(____)(_/\/\_)\___/      \___)(_)\_) (__) (__)   (__)   v1.0")
     print("\n\nLinkedIn: https://www.linkedin.com/in/manish-dalwani/\n")
-    print(f"~~~~~~~~~~~~~~~~~ Welcome to Basic Stegnography Utility ~~~~~~~~~~~~~~~~~")
+    print(f"~~~~~~~~~~~~~~~~~ Welcome to Basic Steganography Utility ~~~~~~~~~~~~~~~~~")
 
     while True:
         print("\n[01] Encode a message into an Image")
         print("[02] Decode a message from an Image")
-        option = input("Select an option: ")
+        option = safe_input("Select an option: ")
         print()
 
         if option in ['1', '01']:
@@ -179,4 +197,7 @@ def main():
             print("❌ Invalid option. Please select a valid option.")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        exit_program()
