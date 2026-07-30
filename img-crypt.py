@@ -50,12 +50,28 @@ color_options = [Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE, Fore.MAGENTA, For
 # Randomly select a color from the list
 selected_color = random.choice(color_options)
 
-def typewriter(text, delay=0.1):
-    for char in text:
-        sys.stdout.write(char)
-        sys.stdout.flush()
-        time.sleep(delay)
+def exit_program():
     print()
+    print(f"\n{yellow_color('⚠')} {red_color(' Interrupted by user.')}")
+    print(green_color("👋 Exiting Img-Crypt..."))
+    print(yellow_color("Thank you for using Img-Crypt!"))
+    sys.exit(0)
+
+def typewriter(text, delay=0.1):
+    try:
+        for char in text:
+            sys.stdout.write(char)
+            sys.stdout.flush()
+            time.sleep(delay)
+        print()
+    except KeyboardInterrupt:
+        exit_program()
+
+def safe_input(message):
+    try:
+        return input(message)
+    except (KeyboardInterrupt, EOFError):
+        exit_program()
 
 def generate_key(password):
     return base64.urlsafe_b64encode(password.ljust(32)[:32].encode())
@@ -74,7 +90,7 @@ def decrypt_message(encrypted_message, password):
 
 def get_valid_file(prompt, file_type):
     while True:
-        file_name = input(prompt).strip()
+        file_name = safe_input(prompt).strip()
         if file_name:
             try:
                 if file_type == "image":
@@ -94,7 +110,7 @@ def encode_text():
     while True:
         print(f"{red_color('[')}{white_color('01')}{red_color(']')} {yellow_color('Enter text manually.')}")
         print(f"{red_color('[')}{white_color('02')}{red_color(']')} {yellow_color('Load text from a file.')}")
-        option = input(f"{blue_color('Select an option: ')}")
+        option = safe_input(f"{blue_color('Select an option: ')}")
         print()
         if option in ['1', '01']:
             # message = ""
@@ -104,7 +120,7 @@ def encode_text():
             #         print(red_color("❗ Message cannot be empty. Please enter a valid message.\n"))
             # break
             while True:
-                message = input(cyan_color("Enter the text to encode: ")).strip()
+                message = safe_input(cyan_color("Enter the text to encode: ")).strip()
                 if message:
                     break
                 print(red_color("❗ Message cannot be empty.\n"))
@@ -119,7 +135,7 @@ def encode_text():
                     print()
                     print(f"{red_color('[')}{white_color('01')}{red_color(']')} {yellow_color('Provide a larger image file.')}")
                     print(f"{red_color('[')}{white_color('02')}{red_color(']')} {yellow_color('Provide a smaller text file.')}")
-                    choice = input(blue_color("Select an option: ")).strip()
+                    choice = safe_input(blue_color("Select an option: ")).strip()
                     print()
                     if choice == '1':
                         img, img_path = get_valid_file(cyan_color("Enter a larger image file: "), "image")
@@ -133,9 +149,9 @@ def encode_text():
         else:
             print(red_color('❌ Invalid option. Please select a valid option.\n'))
     
-    if input(purple_color("\nDo you want to provide a password? (Y/N): ")).strip().lower() == "y":
+    if safe_input(purple_color("\nDo you want to provide a password? (Y/N): ")).strip().lower() == "y":
         while True:
-            password = input(cyan_color("\nEnter password (8-32 characters): ")).strip()
+            password = safe_input(cyan_color("\nEnter password (8-32 characters): ")).strip()
             if 8 <= len(password) <= 32:
                 message = encrypt_message(message, password)
                 break
@@ -143,7 +159,7 @@ def encode_text():
     
     encoded_img = stepic.encode(img, message.encode())
 
-    output_path = input(cyan_color('\nEnter filename to save with extension (.bmp or .png): ')).strip()
+    output_path = safe_input(cyan_color('\nEnter filename to save with extension (.bmp or .png): ')).strip()
     if not output_path.lower().endswith(('.bmp', '.png')):
         output_path = "encoded_image.png"
     encoded_img.save(output_path)
@@ -154,10 +170,11 @@ def decode_text():
     try:
         decoded_message = stepic.decode(img)
         if not decoded_message:
-            print("❌ This image does not contain any secret message.")
+            print(red_color("❌ This image does not contain any secret message."))
             return
     except Exception:
-        print("\n❌ Error decoding the image. It may not contain any secret message.\n")
+        print(red_color("❌ This image does not contain any secret message."))
+        # print(red_color("\n❌ Error decoding the image. It may not contain any secret message.\n"))
         return
     
     if decoded_message.startswith("gAAAAA"):  # Encrypted text detected
@@ -165,10 +182,11 @@ def decode_text():
         retries = 3
         while retries > 0:
             try:
-                password = input(cyan_color('Enter password to decode: '))
+                password = safe_input(cyan_color('Enter password to decode: '))
                 decoded_message = decrypt_message(decoded_message, password)
                 break
-            except:
+            except Exception:
+            # except:
                 retries -= 1
                 print(red_color(f'Incorrect password. {retries} attempts left.\n'))
         if retries == 0:
@@ -176,10 +194,10 @@ def decode_text():
             return
     
     if len(decoded_message) > 100:
-        choice = input(purple_color("\nThe decoded message is long. Do you want to save it to a file? (Y/N): ")).strip().lower()
+        choice = safe_input(purple_color("\nThe decoded message is long. Do you want to save it to a file? (Y/N): ")).strip().lower()
 
         if choice == "y":
-            file_name = input(cyan_color("\nEnter the file name to save the decoded message (e.g., output.txt): ")).strip()
+            file_name = safe_input(cyan_color("\nEnter the file name to save the decoded message (e.g., output.txt): ")).strip()
         
             if not file_name.lower().endswith(('.txt')):
                 file_name = "output.txt"
@@ -203,17 +221,17 @@ def main():
        ____  __  __  ___        ___  ____  _  _  ____  ____ 
       (_  _)(  \\/  )/ __) ___  / __)(  _ \\( \\/ )(  _ \\(_  _)
        _)(_  )    (( (_-.(___)( (__  )   / \\  /  ) __/  )(  
-      (____)(_/\\/\\_)\\___/      \\___)(_)\\_) (__) (__)   (__)    {ver_color('[v1.0]')}
+      (____)(_/\\/\\_)\\___/      \\___)(_)\\_) (__) (__)   (__)    {ver_color('[v2.0]')}
     {Style.RESET_ALL}
     """
 
     print(logo)
     print(f"\n{red_color('LinkedIn:')} {cyan_color('https://www.linkedin.com/in/manish-dalwani/')}\n")
-    print(f"{blue_color('~~~~~~~~~~~~~~~~~')} {green_color('Welcome to Basic Stegnography Utility')} {blue_color('~~~~~~~~~~~~~~~~~')}")
+    print(f"{blue_color('~~~~~~~~~~~~~~~~~')} {green_color('Welcome to Basic Steganography Utility')} {blue_color('~~~~~~~~~~~~~~~~~')}")
     while True:
         print(f"\n{red_color('[')}{white_color('01')}{red_color(']')} {yellow_color('Encode a message into an Image')}")
         print(f"{red_color('[')}{white_color('02')}{red_color(']')} {yellow_color('Decode a message from an Image')}")
-        option = input(f"{blue_color('Select an option: ')}")
+        option = safe_input(f"{blue_color('Select an option: ')}")
         print()
 
         if option in ['1', '01']:
@@ -227,4 +245,7 @@ def main():
             print(f"{red_color('❌ Invalid option. Please select a valid option.')}")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        exit_program()
