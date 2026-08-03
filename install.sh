@@ -7,7 +7,10 @@ echo "Installing Img-Crypt..."
 echo "======================================"
 
 # Install required packages
-sudo apt update
+if ! sudo apt update; then
+    echo "Warning: apt update failed."
+    echo "Continuing installation..."
+fi
 sudo apt install -y python3 python3-pip dos2unix
 
 # Convert Windows line endings (if any)
