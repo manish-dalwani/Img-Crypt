@@ -162,18 +162,36 @@ def encode_text():
     try:
         if img.mode not in ("RGB", "RGBA", "CMYK"):
             img = img.convert("RGB")
-
         encoded_img = stepic.encode(img, message.encode())
-
     except Exception as e:
         print(red_color(f"❌ Unable to encode the image: {e}"))
         return
 
-    output_path = safe_input(cyan_color('\nEnter filename to save with extension (.bmp or .png): ')).strip()
-    if not output_path.lower().endswith(('.bmp', '.png')):
-        output_path = "encoded_image.png"
-    encoded_img.save(output_path)
-    print(green_color(f'\n✅ Encoded image saved as {output_path}\n'))
+    while True:
+        output_path = safe_input(cyan_color(f"\nEnter filename to save with extension (.bmp or .png): ")).strip()
+
+        # Empty input
+        if not output_path:
+            output_path = "encoded_image.png"
+            break
+
+        # User entered only ".png" or ".bmp"
+        if output_path in (".png", ".bmp"):
+            print(red_color(f"❌ Please enter a valid filename (e.g., secret.png)"))
+            continue
+
+        # Valid extension
+        if output_path.lower().endswith((".png", ".bmp")):
+            break
+
+        # Missing extension
+        print(red_color("❌ Output filename must end with .png or .bmp"))
+
+    try:
+        encoded_img.save(output_path)
+        print(green_color(f"\n✅ Encoded image saved as {output_path}\n"))
+    except Exception as e:
+        print(red_color(f"❌ Failed to save image: {e}"))
 
 def decode_text():
     img, _ = get_valid_file(cyan_color("Enter encoded image name or path with extension (e.g., encoded_image.bmp): "), "image")
