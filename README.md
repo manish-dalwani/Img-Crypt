@@ -24,17 +24,13 @@ Follow the steps below to set up Img-Crypt on your system.
 **Step 2:** Make Script Executable:
 
 ```bash
-  chmod +x install.sh
-  chmod +x uninstall.sh
-  chmod +x img-crypt.py
+  chmod +x install.sh uninstall.sh img-crypt.py
 ```
 
 **Step 3:** Convert Windows files to Linux
 
 ```bash
-  dos2unix install.sh
-  dos2unix uninstall.sh
-  dos2unix img-crypt.py
+  dos2unix install.sh uninstall.sh img-crypt.py
 ```
 
 **Step 4:** Script Installation
